@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> Flood Risk Detected — Rising Waters</title>
+  <meta name="description" content="High flood probability detected. Immediate action recommended." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* Rain animation */
+    .rain-container { position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden; }
+    .raindrop {
+      position:absolute;top:-20px;width:2px;
+      background:linear-gradient(180deg,rgba(14,165,233,0),rgba(14,165,233,0.6));
+      border-radius:50px;
+      animation:rain linear infinite;
+    }
+    @keyframes rain { from{transform:translateY(-20px)} to{transform:translateY(110vh)} }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+<div class="rain-container" id="rain"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  <a class="btn-predict-nav" href="/predict">New Prediction</a>
+</nav>
+
+<main class="result-container">
+
+  <!-- Alert Flash -->
+  <div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);border-radius:10px;padding:0.6rem 1.2rem;margin-bottom:1.5rem;font-size:0.85rem;color:#fca5a5;font-weight:600;display:inline-block;animation:fadeDown 0.4s ease;">
+    ALERT: Flood Risk Detected
+  </div>
+
+  <!-- Result Icon -->
+  <div class="result-icon flood-icon"></div>
+
+  <!-- Title -->
+  <h1 class="result-title danger">High Flood Risk!</h1>
+  <p class="result-subtitle">
+    The AI model predicts a <strong>significant probability of flooding</strong> based on the entered meteorological parameters. Immediate precautionary measures are advised.
+  </p>
+
+  <!-- Probability Badge -->
+  <div class="prob-badge">
+    <span class="prob-label">Flood Probability</span>
+    <span class="prob-value danger" id="prob-display">{{ probability }}%</span>
+    <div class="progress-bar-wrap" style="margin-top:0.75rem;">
+      <div class="progress-bar-fill danger" id="prog-bar" style="width:0%;"></div>
+    </div>
+    <span style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Model: XGBoost Classifier</span>
+  </div>
+
+  <!-- Alert Message -->
+  <div class="alert-card danger">
+    <strong> Recommended Actions:</strong>
+    <ul style="padding-left:1.2rem;margin-top:0.5rem;line-height:2;">
+      <li>Issue <strong>flood watch/warning</strong> for the affected region immediately.</li>
+      <li>Initiate <strong>pre-emptive evacuation</strong> of low-lying and flood-prone areas.</li>
+      <li>Alert <strong>disaster response teams</strong> and pre-position resources.</li>
+      <li>Monitor water levels at <strong>rivers and drainage systems</strong> closely.</li>
+      <li>Activate <strong>emergency shelters</strong> and communicate via public warning systems.</li>
+    </ul>
+  </div>
+
+  <!-- Input Summary -->
+  <div class="input-summary">
+    <h4>Input Parameters Used</h4>
+    <div class="summary-grid">
+      {% for key, val in form_data.items() %}
+      <div class="summary-item">
+        <div class="s-label">{{ key }}</div>
+        <div class="s-value">{{ val }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="result-actions">
+    <a class="btn-primary" href="/predict">New Prediction</a>
+    <a class="btn-back" href="/">Home</a>
+  </div>
+
+</main>
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+</footer>
+
+<script>
+  // Particles
+  const pc = document.getElementById('particles');
+  for (let i=0;i<15;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;width:${Math.random()*3+2}px;height:${Math.random()*3+2}px;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;background:#ef4444;`;pc.appendChild(p);}
+
+  // Rain drops
+  const rc = document.getElementById('rain');
+  for(let i=0;i<60;i++){
+    const d=document.createElement('div');d.className='raindrop';
+    const h=Math.random()*60+20;
+    d.style.cssText=`left:${Math.random()*100}%;height:${h}px;animation-duration:${Math.random()*0.8+0.5}s;animation-delay:${Math.random()*2}s;opacity:${Math.random()*0.5+0.2};`;
+    rc.appendChild(d);
+  }
+
+  // Animate progress bar
+  const prob = {{ probability }};
+  setTimeout(() => {
+    document.getElementById('prog-bar').style.width = prob + '%';
+  }, 300);
+</script>
+</body>
+</html>

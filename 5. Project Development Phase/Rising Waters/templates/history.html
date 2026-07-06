@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prediction History — Rising Waters</title>
+  <meta name="description" content="View historical logs of flood prediction simulations ran by all users." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .history-section { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+    
+    /* Table Styling */
+    .history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--glow-blue);
+      overflow: hidden;
+    }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    .history-table th {
+      background: rgba(0,0,0,0.04);
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 1rem;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .history-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .history-table tr:last-child td {
+      border-bottom: none;
+    }
+    .history-table tr:hover td {
+      background: rgba(13,148,136,0.02);
+    }
+    
+    /* User Tag */
+    .user-tag {
+      display: inline-flex;
+      flex-direction: column;
+    }
+    .user-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-badge.danger {
+      background: rgba(239,68,68,0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .status-badge.safe {
+      background: rgba(16,185,129,0.1);
+      color: var(--success);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    
+    /* No Records */
+    .no-records {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link active" href="/history">History</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  {% if session.get('username') %}
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500;">User: <strong style="color:var(--text-primary);">{{ session.get('username') }}</strong></span>
+    <a class="btn-predict-nav" href="/logout" style="background: rgba(0,0,0,0.05); color:var(--text-primary); border:1px solid var(--border); box-shadow:none; font-size:0.8rem; padding:0.4rem 1rem;">Logout</a>
+  </div>
+  {% endif %}
+</nav>
+
+<div class="history-section">
+  <div class="section-header" style="margin-bottom: 2.5rem;">
+    <h1 class="section-title" style="text-align:left;">Analysis Audit Logs</h1>
+    <p class="section-sub" style="text-align:left; max-width: 100%;">
+      System logs detailing meteorological parameter submissions and prediction runs by all workspace members.
+    </p>
+  </div>
+
+  <div class="history-card">
+    <h3 style="font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; color:var(--text-primary);">Simulation Logs</h3>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Real-time database transaction logs of flood model operations.</p>
+    
+    <div class="table-container">
+      {% if history %}
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>User Identity</th>
+            <th>Date &amp; Time</th>
+            <th>Temp (°C)</th>
+            <th>Humidity (%)</th>
+            <th>Cloud Cover (%)</th>
+            <th>Annual (mm)</th>
+            <th>Jan-Feb (mm)</th>
+            <th>Mar-May (mm)</th>
+            <th>Jun-Sep (mm)</th>
+            <th>Oct-Dec (mm)</th>
+            <th>Probability</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+          <tr>
+            <td>
+              <div class="user-tag">
+                <span class="user-name">{{ row.username }}</span>
+                <span class="user-email">{{ row.email }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="font-family:monospace; font-size:0.8rem;">{{ row.timestamp }}</span>
+            </td>
+            <td>{{ row.temp }}</td>
+            <td>{{ row.humidity }}</td>
+            <td>{{ row.cloud_cover }}</td>
+            <td>{{ row.annual }}</td>
+            <td>{{ row.jan_feb }}</td>
+            <td>{{ row.mar_may }}</td>
+            <td>{{ row.jun_sep }}</td>
+            <td>{{ row.oct_dec }}</td>
+            <td style="font-weight:600; font-family:monospace;">{{ row.probability }}%</td>
+            <td>
+              {% if row.prediction == 1 %}
+              <span class="status-badge danger">Flood Risk</span>
+              {% else %}
+              <span class="status-badge safe">Safe</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="no-records">
+        <h3>No logs found</h3>
+        <p style="font-size:0.85rem; margin-top:0.5rem;">Perform a simulation on the Predict form to populate active logs.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple particle system
+  const canvasContainer = document.getElementById('particles');
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (Math.random() * 10 + 6) + 's';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+    canvasContainer.appendChild(p);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Preprocessing — Rising Waters</title>
+  <meta name="description" content="Learn about data preprocessing steps in machine learning: missing values, outliers capping, categorical encoding, splitting, and scaling with an interactive simulation." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .prep-section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+    
+    /* Concept Grid */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .concept-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 1.8rem;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .concept-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--glow-blue); }
+    .concept-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
+    .concept-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 1.2rem; }
+    
+    /* Code Box */
+    .code-box {
+      background: rgba(10,15,30,0.6);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      line-height: 1.4;
+      margin-top: auto;
+    }
+    .code-box span.comment { color: #64748b; }
+    .code-box span.keyword { color: #f43f5e; }
+    .code-box span.func { color: #a855f7; }
+    .code-box span.str { color: #34d399; }
+
+    /* Interactive Simulator */
+    .simulator-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+      margin-top: 3rem;
+    }
+    .sim-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .sim-title { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; }
+    .sim-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .sim-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .sim-btn:hover { background: rgba(14,165,233,0.1); color: var(--text-primary); border-color: var(--primary); }
+    .sim-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--glow-blue); }
+    
+    /* Table Styling */
+    .sim-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.02); margin-bottom: 1.5rem; }
+    .sim-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    .sim-table th { background: rgba(0,0,0,0.04); color: var(--text-muted); font-weight: 600; padding: 0.85rem 1rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .sim-table td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.04); font-family: monospace; transition: all 0.3s ease; }
+    .sim-table tr:last-child td { border-bottom: none; }
+    
+    /* Variable container highlights */
+    .sim-table th.col-x, .sim-table td.col-x { border-left: 2px dashed rgba(14,165,233,0.1); border-right: 2px dashed rgba(14,165,233,0.1); }
+    .sim-table th.col-y, .sim-table td.col-y { border-left: 2px dashed rgba(168,85,247,0.1); border-right: 2px dashed rgba(168,85,247,0.1); }
+    
+    .sim-table.split-active th.col-x, .sim-table.split-active td.col-x { background: rgba(14,165,233,0.04); border-color: rgba(14,165,233,0.4); }
+    .sim-table.split-active th.col-y, .sim-table.split-active td.col-y { background: rgba(168,85,247,0.04); border-color: rgba(168,85,247,0.4); }
+
+    /* Cell states styling */
+    .cell-missing { background: rgba(239,68,68,0.12) !important; color: #b91c1c !important; border: 1.5px solid rgba(239,68,68,0.3) !important; border-radius: 4px; position: relative; }
+    .cell-missing::after { content: ' Missing'; font-size: 0.65rem; font-weight: bold; background: var(--danger); color: white; padding: 1px 4px; border-radius: 3px; margin-left: 5px; text-transform: uppercase; vertical-align: middle; }
+    
+    .cell-outlier { background: rgba(245,158,11,0.12) !important; color: #b45309 !important; border: 1.5px solid rgba(245,158,11,0.3) !important; border-radius: 4px; }
+    .cell-outlier::after { content: ' Outlier'; font-size: 0.65rem; font-weight: bold; background: var(--warning); color: black; padding: 1px 4px; border-radius: 3px; margin-left: 5px; text-transform: uppercase; vertical-align: middle; }
+    
+    .cell-categorical { background: rgba(6,182,212,0.1) !important; color: #0369a1 !important; border: 1.5px solid rgba(6,182,212,0.25) !important; border-radius: 4px; }
+    .cell-categorical::after { content: ' Text'; font-size: 0.65rem; font-weight: bold; background: var(--accent); color: white; padding: 1px 4px; border-radius: 3px; margin-left: 5px; text-transform: uppercase; vertical-align: middle; }
+    
+    .cell-transformed { background: rgba(34,197,94,0.12) !important; color: #15803d !important; border: 1.5px solid rgba(34,197,94,0.3) !important; border-radius: 4px; animation: pulseGreen 1s ease; }
+    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0px rgba(34,197,94,0.5); } 100% { box-shadow: 0 0 0 10px rgba(34,197,94,0); } }
+
+    /* Explanation Panel */
+    .sim-explanation {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .sim-explanation strong { color: var(--primary); }
+    .sim-explanation .math-formula { display: inline-block; background: rgba(255,255,255,0.05); padding: 0.15rem 0.5rem; border-radius: 4px; font-family: monospace; font-weight: bold; color: #38bdf8; margin: 0.2rem 0; }
+    .sim-explanation .badge-leakage { display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; font-size: 0.72rem; font-weight: bold; padding: 0.2rem 0.6rem; border-radius: 4px; margin-top: 0.5rem; align-self: flex-start; }
+
+    .epic-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.25);
+      border-radius: 6px; padding: 0.25rem 0.75rem;
+      font-size: 0.7rem; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  <a class="btn-predict-nav" href="/predict">Predict Flood Risk</a>
+</nav>
+
+<!-- Page Content -->
+<div class="prep-section">
+  <div class="section-header">
+    <div class="hero-badge" style="margin-bottom:1rem;">
+      <span></span> Data Preprocessing Guide
+    </div>
+    <h1 class="section-title">Machine Learning Data Preprocessing</h1>
+    <p class="section-sub">
+      Before model training, raw meteorological records must be cleaned, encoded, and scaled. 
+      Explore the theoretical foundations and see how they are applied in our pipeline.
+    </p>
+  </div>
+
+  <!-- Theoretical Concepts Grid -->
+  <div class="concept-grid">
+    
+    <!-- 1. Missing Values -->
+    <div class="concept-card">
+      <div>
+        <div class="epic-badge">Step 3.1</div>
+        <h3>Missing Value Detection</h3>
+        <p>
+          Handling missing values is an essential data preprocessing step because incomplete data compromises machine learning model accuracy and reliability. Missing data occurs when entries are empty or unrecorded, which can cause training errors or incorrect predictions.
+        </p>
+        <p>
+          To detect missing values, the function <code>isnull().sum()</code> is used. It checks each cell, returning True for missing and False for present, and counts the total missing values per column. The function <code>isnull().any()</code> confirms if any column contains missing data at all.
+        </p>
+      </div>
+      <div class="code-box">
+<span class="comment"># Detect & sum nulls per column</span>
+print(df.<span class="func">isnull</span>().<span class="func">sum</span>())
+
+<span class="comment"># Confirm if any null exists</span>
+<span class="keyword">if</span> df.<span class="func">isnull</span>().<span class="func">any</span>().<span class="func">any</span>():
+    <span class="comment"># Impute using column median</span>
+    df.<span class="func">fillna</span>(df.<span class="func">median</span>(), inplace=<span class="keyword">True</span>)</div>
+    </div>
+
+    <!-- 2. Outlier Capping -->
+    <div class="concept-card">
+      <div>
+        <div class="epic-badge">Step 3.2</div>
+        <h3>Outlier IQR Capping</h3>
+        <p>
+          Outlier handling is an important preprocessing step because extreme values can negatively affect machine learning model performance. Outliers are identified using box plots and the Interquartile Range (IQR) method, where values outside the calculated upper and lower bounds are considered outliers.
+        </p>
+        <p>
+          Instead of removing these values, the capping technique is applied to preserve the dataset size. Values above the upper limit are replaced with the upper bound, while values below the lower limit are replaced with the lower bound. In this project, outliers were detected and treated using the IQR-based capping method.
+        </p>
+      </div>
+      <div class="code-box">
+Q1 = df[col].<span class="func">quantile</span>(<span class="str">0.25</span>)
+Q3 = df[col].<span class="func">quantile</span>(<span class="str">0.75</span>)
+IQR = Q3 - Q1
+lower = Q1 - <span class="str">1.5</span> * IQR
+upper = Q3 + <span class="str">1.5</span> * IQR
+<span class="comment"># Cap outliers outside bounds</span>
+df[col] = df[col].<span class="func">clip</span>(lower, upper)</div>
+    </div>
+
+    <!-- 3. Categorical Conversion -->
+    <div class="concept-card">
+      <div>
+        <div class="epic-badge">Step 3.3</div>
+        <h3>Categorical Value Encoding</h3>
+        <p>
+          Categorical features must be converted into numerical format before model training because machine learning algorithms work mainly with numbers. Raw text labels will cause errors during training if passed directly.
+        </p>
+        <p>
+          <strong>Feature Mapping:</strong> Used when categories have a clear order or fixed meaning (e.g. <code>Low=0</code>, <code>Medium=1</code>, <code>High=2</code>).<br/>
+          <strong>Label Encoding:</strong> Assigns a unique integer value to each unique string label (e.g. <code>Male=0</code>, <code>Female=1</code>). This uses Scikit-learn's <code>LabelEncoder</code>.
+        </p>
+      </div>
+      <div class="code-box">
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> LabelEncoder
+le = <span class="func">LabelEncoder</span>()
+
+<span class="comment"># Fit & transform object columns</span>
+df[<span class="str">'State'</span>] = le.<span class="func">fit_transform</span>(df[<span class="str">'State'</span>])</div>
+    </div>
+
+    <!-- 4. Dataset Splitting -->
+    <div class="concept-card">
+      <div>
+        <div class="epic-badge">Step 3.4 &amp; 3.5</div>
+        <h3> Dependent &amp; Independent Variables</h3>
+        <p>
+          Splitting the dataset into dependent and independent variables is a critical step before model training. This step completely separates the input data from the output data, allowing the model to learn the relationship between them.
+        </p>
+        <p>
+          <strong>Independent Variables (X):</strong> Input features (meteorological readings like Cloud Cover, ANNUAL, etc.) used by the model to learn patterns and make predictions.<br/>
+          <strong>Target Variable (y):</strong> The dependent variable, containing prediction labels (like <code>Floods</code> class column).
+        </p>
+      </div>
+      <div class="code-box">
+<span class="comment"># Independent features (X)</span>
+X = df.<span class="func">drop</span>(<span class="str">'Floods'</span>, axis=<span class="str">1</span>)
+<span class="comment"># Dependent feature (y)</span>
+y = df[<span class="str">'Floods'</span>]
+
+<span class="comment"># Split into Train / Test (75-25)</span>
+X_tr, X_te, y_tr, y_te = <span class="func">train_test_split</span>(
+    X, y, test_size=<span class="str">0.25</span>, random_state=<span class="str">42</span>
+)</div>
+    </div>
+
+    <!-- 5. Feature Scaling -->
+    <div class="concept-card" style="grid-column: span 1; @media (min-width: 1024px) { grid-column: span 2; }">
+      <div>
+        <div class="epic-badge">Step 3.6</div>
+        <h3>Feature Scaling &amp; Preventing Leakage</h3>
+        <p>
+          Feature scaling is an essential preprocessing step used to bring all input features into a similar range. Without scaling, algorithms may give more importance to features with larger numerical ranges.
+        </p>
+        <p>
+          We apply Scikit-learn's <code>StandardScaler</code>, which normalizes features with formula <span class="math-formula">z = (x - μ) / σ</span> so that mean is close to 0 and standard deviation is close to 1.
+        </p>
+        <p>
+          <strong>Critical Rule: Preventing Data Leakage!</strong> The scaler must be fitted <strong>ONLY</strong> on the training data (<code>X_train</code>) and then used to transform both training and testing datasets. Doing <code>fit_transform()</code> on test data leaks statistical distributions from the test set, creating optimistic bias and training bugs.
+        </p>
+      </div>
+      <div class="code-box">
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+sc = <span class="func">StandardScaler</span>()
+
+<span class="comment"># Correct Implementation</span>
+X_train_sc = sc.<span class="func">fit_transform</span>(X_train)   <span class="comment"># fit + transform</span>
+X_test_sc  = sc.<span class="func">transform</span>(X_test)        <span class="comment"># transform ONLY (no fit!)</span>
+
+<span class="comment"># Warning: sc.fit_transform(X_test) is a BUG!</span></div>
+    </div>
+
+  </div>
+
+  <!-- Interactive Pipeline Simulator -->
+  <div class="simulator-container">
+    <div class="sim-header">
+      <div>
+        <div class="epic-badge" style="background:rgba(34,197,94,0.12); color:var(--success); border-color:rgba(34,197,94,0.25);">Interactive Simulator</div>
+        <h2 class="sim-title">Step-by-Step Preprocessing Pipeline</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem;">Watch how raw weather data transforms as it goes through the ML pipeline.</p>
+      </div>
+      
+      <!-- Reset/Play controls -->
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn-outline" onclick="prevStep()" style="font-size:0.8rem; padding:0.4rem 1rem;">← Previous</button>
+        <button class="btn-primary" onclick="nextStep()" style="font-size:0.8rem; padding:0.4rem 1rem;">Next Step →</button>
+      </div>
+    </div>
+
+    <!-- Step buttons -->
+    <div class="sim-controls">
+      <button class="sim-btn active" id="btn-0" onclick="goToStep(0)">Raw Data</button>
+      <button class="sim-btn" id="btn-1" onclick="goToStep(1)">1. Impute Nulls</button>
+      <button class="sim-btn" id="btn-2" onclick="goToStep(2)">2. Cap Outliers</button>
+      <button class="sim-btn" id="btn-3" onclick="goToStep(3)">3. Encode State</button>
+      <button class="sim-btn" id="btn-4" onclick="goToStep(4)">4. Split Variables</button>
+      <button class="sim-btn" id="btn-5" onclick="goToStep(5)">5. StandardScaler</button>
+    </div>
+
+    <!-- Simulation Table -->
+    <div class="sim-table-wrap">
+      <table class="sim-table" id="sim-table">
+        <thead>
+          <tr>
+            <th class="col-x">Temp (°C)</th>
+            <th class="col-x">Humidity (%)</th>
+            <th class="col-x">Cloud Cover</th>
+            <th class="col-x">ANNUAL (mm)</th>
+            <th class="col-x">State (Text)</th>
+            <th class="col-y">Floods (Target)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr id="row-0">
+            <td id="r0-c0" class="col-x">29.0</td>
+            <td id="r0-c1" class="col-x">85.0</td>
+            <td id="r0-c2" class="col-x">45.0</td>
+            <td id="r0-c3" class="col-x">3248.6</td>
+            <td id="r0-c4" class="col-x">Kerala</td>
+            <td id="r0-c5" class="col-y">0</td>
+          </tr>
+          <!-- Row 2 -->
+          <tr id="row-1">
+            <td id="r1-c0" class="col-x">31.0</td>
+            <td id="r1-c1" class="col-x">NaN</td>
+            <td id="r1-c2" class="col-x">42.0</td>
+            <td id="r1-c3" class="col-x">2741.6</td>
+            <td id="r1-c4" class="col-x">Assam</td>
+            <td id="r1-c5" class="col-y">1</td>
+          </tr>
+          <!-- Row 3 -->
+          <tr id="row-2">
+            <td id="r2-c0" class="col-x">28.0</td>
+            <td id="r2-c1" class="col-x">72.0</td>
+            <td id="r2-c2" class="col-x">35.0</td>
+            <td id="r2-c3" class="col-x">9999.0</td>
+            <td id="r2-c4" class="col-x">Kerala</td>
+            <td id="r2-c5" class="col-y">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Explanation Box -->
+    <div class="sim-explanation" id="sim-explanation">
+      <strong>Raw Data Loaded:</strong> The dataset is loaded from historical records. Notice the following issues:
+      <ul>
+        <li>Row 2 has a <strong>Missing (NaN)</strong> value in Humidity.</li>
+        <li>Row 3 has a extreme <strong>Outlier (9999.0 mm)</strong> in Annual Rainfall.</li>
+        <li>The <strong>State</strong> column contains string categorical descriptions which algorithms cannot understand directly.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Call to action -->
+  <div style="text-align:center; margin-top:3.5rem; padding-bottom:1rem;">
+    <a class="btn-primary" href="/predict" style="font-size:1rem; padding:0.9rem 2.2rem;">
+       Proceed to Predictor →
+    </a>
+    &nbsp;&nbsp;
+    <a class="btn-outline" href="/analysis" style="font-size:1rem; padding:0.9rem 2.2rem;">
+       View Exploratory Charts
+    </a>
+  </div>
+</div>
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+</footer>
+
+<!-- Simulation Engine Script -->
+<script>
+  // Particle generator
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${Math.random()*100}%;width:${Math.random()*3+2}px;height:${Math.random()*3+2}px;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;`;
+    container.appendChild(p);
+  }
+
+  // Simulator state tracking
+  let currentStep = 0;
+  const totalSteps = 6;
+
+  // Values matrix for each step: row-col structure
+  const states = [
+    // Step 0: Raw Data
+    {
+      values: [
+        ["29.0", "85.0", "45.0", "3248.6", "Kerala", "0"],
+        ["31.0", "NaN", "42.0", "2741.6", "Assam", "1"],
+        ["28.0", "72.0", "35.0", "9999.0", "Kerala", "0"]
+      ],
+      classes: {
+        "r1-c1": "cell-missing",
+        "r2-c3": "cell-outlier",
+        "r0-c4": "cell-categorical",
+        "r1-c4": "cell-categorical",
+        "r2-c4": "cell-categorical"
+      },
+      split: false,
+      explanation: `<strong>Raw Data Loaded:</strong> The dataset represents standard meteorological records. Note the issues highlighted above:
+      <ul style="margin-top: 0.5rem; padding-left: 1.25rem;">
+        <li>Row 2 has a missing <code>NaN</code> entry in Humidity.</li>
+        <li>Row 3 contains a heavy outlier <code>9999.0 mm</code> in Annual Rainfall.</li>
+        <li>The State column features text categorical descriptors (<code>Kerala</code>, <code>Assam</code>).</li>
+      </ul>`
+    },
+    // Step 1: Imputed Data
+    {
+      values: [
+        ["29.0", "85.0", "45.0", "3248.6", "Kerala", "0"],
+        ["31.0", "78.5", "42.0", "2741.6", "Assam", "1"],
+        ["28.0", "72.0", "35.0", "9999.0", "Kerala", "0"]
+      ],
+      classes: {
+        "r1-c1": "cell-transformed",
+        "r2-c3": "cell-outlier",
+        "r0-c4": "cell-categorical",
+        "r1-c4": "cell-categorical",
+        "r2-c4": "cell-categorical"
+      },
+      split: false,
+      explanation: `<strong>Step 1 — Imputing Missing Values:</strong> 
+      We run <code>df.isnull().sum()</code> to scan for empty entries. In Row 2, the missing Humidity is imputed with the column median of <strong style="color:var(--success);">78.5%</strong>.
+      This fills the gap and preserves the dataset size, avoiding the need to delete rows which would lose valuable data.`
+    },
+    // Step 2: Capping Outliers
+    {
+      values: [
+        ["29.0", "85.0", "45.0", "3248.6", "Kerala", "0"],
+        ["31.0", "78.5", "42.0", "2741.6", "Assam", "1"],
+        ["28.0", "72.0", "35.0", "3540.2", "Kerala", "0"]
+      ],
+      classes: {
+        "r1-c1": "",
+        "r2-c3": "cell-transformed",
+        "r0-c4": "cell-categorical",
+        "r1-c4": "cell-categorical",
+        "r2-c4": "cell-categorical"
+      },
+      split: false,
+      explanation: `<strong>Step 2 — IQR Outlier Capping:</strong> 
+      Using the Interquartile Range (IQR) method, the upper bound is computed as Q3 + 1.5 * IQR = 3540.2 mm. 
+      The outlier <code>9999.0</code> exceeds this limit, so it is capped at <strong style="color:var(--success);">3540.2 mm</strong>.
+      This preserves the data record without skewing distance calculations during training.`
+    },
+    // Step 3: Encoding Categorical features
+    {
+      values: [
+        ["29.0", "85.0", "45.0", "3248.6", "1", "0"],
+        ["31.0", "78.5", "42.0", "2741.6", "0", "1"],
+        ["28.0", "72.0", "35.0", "3540.2", "1", "0"]
+      ],
+      classes: {
+        "r1-c1": "",
+        "r2-c3": "",
+        "r0-c4": "cell-transformed",
+        "r1-c4": "cell-transformed",
+        "r2-c4": "cell-transformed"
+      },
+      split: false,
+      explanation: `<strong>Step 3 — Categorical Variable Encoding:</strong>
+      Algorithms only process numbers, so text labels must be mapped. 
+      Using Scikit-learn's <code>LabelEncoder</code>, <code>Assam</code> becomes <strong style="color:var(--success);">0</strong> and <code>Kerala</code> becomes <strong style="color:var(--success);">1</strong>. Now all columns are fully numerical.`
+    },
+    // Step 4: Split X & y
+    {
+      values: [
+        ["29.0", "85.0", "45.0", "3248.6", "1", "0"],
+        ["31.0", "78.5", "42.0", "2741.6", "0", "1"],
+        ["28.0", "72.0", "35.0", "3540.2", "1", "0"]
+      ],
+      classes: {},
+      split: true,
+      explanation: `<strong>Step 4 — Variable Splitting (X & y):</strong>
+      The features are split into:
+      <ul style="margin-top:0.4rem; padding-left:1.25rem;">
+        <li><strong style="color:var(--primary);">Independent variables (X)</strong>: Input features used to make predictions (Temp, Humidity, Cloud Cover, ANNUAL, State).</li>
+        <li><strong style="color:#a855f7;">Dependent target (y)</strong>: The outcome labels (Floods).</li>
+      </ul>
+      This ensures input and output data are completely separated, preparing the datasets for training and testing.`
+    },
+    // Step 5: StandardScaler Scaling
+    {
+      values: [
+        ["-0.27", "0.98", "1.41", "0.22", "0.71", "0"],
+        ["1.35", "0.02", "0.55", "-1.41", "-1.41", "1"],
+        ["-1.08", "-0.94", "-1.96", "1.18", "0.71", "0"]
+      ],
+      classes: {
+        "r0-c0": "cell-transformed", "r0-c1": "cell-transformed", "r0-c2": "cell-transformed", "r0-c3": "cell-transformed", "r0-c4": "cell-transformed",
+        "r1-c0": "cell-transformed", "r1-c1": "cell-transformed", "r1-c2": "cell-transformed", "r1-c3": "cell-transformed", "r1-c4": "cell-transformed",
+        "r2-c0": "cell-transformed", "r2-c1": "cell-transformed", "r2-c2": "cell-transformed", "r2-c3": "cell-transformed", "r2-c4": "cell-transformed"
+      },
+      split: true,
+      explanation: `<strong>Step 5 — Feature Scaling (StandardScaler):</strong>
+      To prevent scale bias, <code>StandardScaler</code> centers each feature by subtracting its mean and dividing by its standard deviation: <span class="math-formula">z = (x - μ) / σ</span>.
+      <br/>
+      Notice: <strong>Only the independent variables (X) are scaled</strong>. The target variable (y) is NEVER scaled because it represents class labels.
+      <div class="badge-leakage"> PREVENTION OF DATA LEAKAGE: Scaler is fitted on training data only. Test set is transformed without re-fitting.</div>`
+    }
+  ];
+
+  function renderState(step) {
+    const state = states[step];
+    const table = document.getElementById("sim-table");
+    
+    // Update active class on control buttons
+    for (let i = 0; i < totalSteps; i++) {
+      const btn = document.getElementById("btn-" + i);
+      if (i === step) btn.classList.add("active");
+      else btn.classList.remove("active");
+    }
+
+    // Update Split styling on table
+    if (state.split) {
+      table.classList.add("split-active");
+    } else {
+      table.classList.remove("split-active");
+    }
+
+    // Set values and classes
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 6; c++) {
+        const cellId = `r${r}-c${c}`;
+        const cell = document.getElementById(cellId);
+        cell.innerText = state.values[r][c];
+        
+        // Remove existing custom classes
+        cell.className = c < 5 ? "col-x" : "col-y";
+        
+        // Apply class if defined
+        if (state.classes[cellId]) {
+          cell.classList.add(state.classes[cellId]);
+        }
+      }
+    }
+
+    // Update explanation text
+    document.getElementById("sim-explanation").innerHTML = state.explanation;
+  }
+
+  function nextStep() {
+    if (currentStep < totalSteps - 1) {
+      currentStep++;
+      renderState(currentStep);
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      currentStep--;
+      renderState(currentStep);
+    }
+  }
+
+  function goToStep(step) {
+    currentStep = step;
+    renderState(currentStep);
+  }
+
+  // Initial render
+  renderState(0);
+</script>
+
+</body>
+</html>

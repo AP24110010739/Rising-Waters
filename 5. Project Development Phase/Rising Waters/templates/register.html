@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Rising Waters</title>
+  <meta name="description" content="Register a new account to access the Rising Waters flood prediction system." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 95vh;
+      padding: 2rem 1rem;
+    }
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: var(--glow-blue);
+      backdrop-filter: blur(16px);
+      transition: var(--transition);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .auth-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      box-shadow: var(--glow-blue);
+    }
+    .auth-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .auth-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .auth-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .auth-link:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">RW</div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Register to run predictive flood simulations</p>
+    </div>
+
+    {% if error %}
+    <div class="error-alert" style="margin-bottom:1.5rem;">
+      <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/register" style="display:flex; flex-direction:column; gap:1.2rem;">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" placeholder="Choose a username" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Confirm Password</label>
+        <input class="form-input" type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required />
+      </div>
+
+      <button type="submit" class="btn-submit" style="margin-top:0.5rem;">
+        Register Workspace
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a class="auth-link" href="/login">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple particle system
+  const canvasContainer = document.getElementById('particles');
+  const count = 25;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (Math.random() * 10 + 6) + 's';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+    canvasContainer.appendChild(p);
+  }
+</script>
+
+</body>
+</html>

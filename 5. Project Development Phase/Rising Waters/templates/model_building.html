@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Building — Rising Waters</title>
+  <meta name="description" content="Epic 4 Model Building — Decision Tree, Random Forest, KNN, and XGBoost classifiers trained, compared and evaluated using accuracy, confusion matrix and classification report." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .mb-section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+
+    .epic-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.25);
+      border-radius: 6px; padding: 0.25rem 0.75rem;
+      font-size: 0.7rem; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem;
+    }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+    /* ── Concept Cards ── */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem; margin: 2rem 0;
+    }
+    .concept-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 1.8rem;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .concept-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--glow-blue); }
+    .concept-card h3 {
+      font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700;
+      margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.6rem;
+    }
+    .concept-card p { font-size: 0.87rem; color: var(--text-muted); line-height: 1.68; margin-bottom: 0.75rem; }
+    .concept-card p:last-of-type { margin-bottom: 1rem; }
+
+    /* Step list inside cards */
+    .step-list { list-style: none; padding: 0; margin: 0 0 1rem; }
+    .step-list li {
+      display: flex; gap: 0.65rem; align-items: flex-start;
+      font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+      padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num {
+      min-width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3);
+      color: var(--primary); font-size: 0.65rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    /* ── Code Box ── */
+    .code-box {
+      background: rgba(10,15,30,0.7);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 1rem 1.15rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.83rem; color: #38bdf8;
+      overflow-x: auto; line-height: 1.55;
+      margin-top: auto;
+    }
+    .code-box .c  { color: #64748b; }
+    .code-box .k  { color: #f43f5e; }
+    .code-box .f  { color: #a855f7; }
+    .code-box .s  { color: #34d399; }
+    .code-box .n  { color: #fb923c; }
+    .code-box .num { color: #fbbf24; }
+
+    /* ── Results Table ── */
+    .results-table-wrap {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); overflow: hidden;
+      backdrop-filter: blur(12px); margin-top: 2rem;
+    }
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .results-table th {
+      background: rgba(15,23,42,0.8); color: var(--text-muted);
+      padding: 0.9rem 1.2rem; font-weight: 700; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border); text-align: center;
+    }
+    .results-table th:first-child { text-align: left; }
+    .results-table td {
+      padding: 0.9rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+      text-align: center; transition: var(--transition);
+    }
+    .results-table td:first-child { text-align: left; font-weight: 600; }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .results-table tr.best-row td { background: rgba(14,165,233,0.07); }
+    .acc-value { font-family: 'Outfit', sans-serif; font-weight: 800; }
+    .acc-value.best { color: var(--primary); font-size: 1.05rem; }
+    .best-tag {
+      display: inline-block; background: var(--primary); color: white;
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.15rem 0.55rem; border-radius: 4px; margin-left: 0.4rem;
+      vertical-align: middle; letter-spacing: 0.4px;
+    }
+
+    /* ── Animated Bar Chart ── */
+    .bar-section {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 2.5rem 2rem;
+      backdrop-filter: blur(16px); margin-top: 2rem;
+    }
+    .bar-chart {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 2.5rem; height: 180px;
+      border-bottom: 2px solid var(--border);
+      margin: 1.5rem 0 0;
+    }
+    .bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; max-width: 100px; }
+    .bar-pct { font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800; }
+    .bar { width: 100%; border-radius: 8px 8px 0 0; transition: height 1.2s cubic-bezier(0.34,1.56,0.64,1); height: 0; }
+    .bar.dt  { background: linear-gradient(180deg, #60a5fa, #3b82f6); }
+    .bar.rf  { background: linear-gradient(180deg, #4ade80, #22c55e); }
+    .bar.knn { background: linear-gradient(180deg, #fcd34d, #f59e0b); }
+    .bar.xgb { background: linear-gradient(180deg, #f97316, #ef4444); box-shadow: 0 0 20px rgba(239,68,68,0.35); }
+    .bar-name { font-size: 0.72rem; color: var(--text-muted); text-align: center; font-weight: 600; margin-top: 0.5rem; }
+    .bar-best-badge {
+      background: var(--primary); color: white;
+      font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.12rem 0.45rem; border-radius: 3px; letter-spacing: 0.4px;
+    }
+
+    /* ── Confusion Matrix ── */
+    .cm-section {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 2.5rem;
+      backdrop-filter: blur(16px); margin-top: 3rem;
+    }
+    .cm-outer { display: flex; justify-content: center; margin: 1.5rem 0; }
+    .cm-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+    .cm-row  { display: flex; gap: 0.5rem; align-items: center; }
+    .cm-cell {
+      width: 130px; height: 110px; border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent;
+    }
+    .cm-cell:hover { transform: scale(1.05); }
+    .cm-cell.tn { background: rgba(34,197,94,0.14);  border-color: rgba(34,197,94,0.3); }
+    .cm-cell.fp { background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.3); }
+    .cm-cell.fn { background: rgba(239,68,68,0.14);  border-color: rgba(239,68,68,0.3); }
+    .cm-cell.tp { background: rgba(34,197,94,0.1);   border-color: rgba(34,197,94,0.25); }
+    .cm-cell.active-cell { border-color: var(--primary) !important; box-shadow: 0 0 18px rgba(14,165,233,0.4); }
+    .cm-type { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem; }
+    .cm-val  { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; }
+    .cm-abbr { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .cm-cell.tn .cm-type, .cm-cell.tn .cm-val { color: #4ade80; }
+    .cm-cell.fp .cm-type, .cm-cell.fp .cm-val { color: #fcd34d; }
+    .cm-cell.fn .cm-type, .cm-cell.fn .cm-val { color: #fca5a5; }
+    .cm-cell.tp .cm-type, .cm-cell.tp .cm-val { color: #86efac; }
+    .cm-axis {
+      font-size: 0.65rem; color: var(--text-muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .cm-axis.vertical {
+      writing-mode: vertical-lr; text-orientation: mixed;
+      transform: rotate(180deg); padding-right: 0.5rem;
+    }
+    .cm-tooltip {
+      background: rgba(15,23,42,0.95); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1rem 1.5rem;
+      font-size: 0.87rem; line-height: 1.65; color: var(--text-primary);
+      margin: 1rem auto 0; max-width: 500px; min-height: 60px;
+    }
+    .cm-tooltip strong { color: var(--primary); }
+
+    /* ── Metrics Cards ── */
+    .metrics-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .metric-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.2rem; text-align: center; transition: var(--transition);
+    }
+    .metric-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+    .metric-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .metric-val { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 0.3rem 0; }
+    .metric-desc { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* ── Why XGBoost ── */
+    .why-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .why-card {
+      background: rgba(14,165,233,0.05); border: 1px solid rgba(14,165,233,0.18);
+      border-radius: var(--radius-lg); padding: 1.25rem 1.4rem;
+      transition: var(--transition);
+    }
+    .why-card:hover { border-color: var(--primary); background: rgba(14,165,233,0.09); }
+    .why-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--primary); }
+    .why-card p  { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── Reference Links ── */
+    .ref-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+    .ref-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.4rem 0.9rem;
+      font-size: 0.8rem; color: var(--primary); text-decoration: none;
+      transition: var(--transition);
+    }
+    .ref-link:hover { border-color: var(--primary); background: rgba(14,165,233,0.1); }
+
+    /* ── Save Section ── */
+    .save-section {
+      background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(6,182,212,0.06));
+      border: 1px solid rgba(14,165,233,0.2);
+      border-radius: var(--radius-xl); padding: 2rem 2.5rem; margin-top: 2rem;
+    }
+    .save-section h3 { font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:800; margin-bottom:0.75rem; }
+
+    .reveal { opacity:0; transform:translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  <a class="btn-predict-nav" href="/predict">Predict Flood Risk</a>
+</nav>
+
+<!-- Page Content -->
+<div class="mb-section">
+
+  <!-- Header -->
+  <div class="section-header">
+    <div class="hero-badge" style="margin-bottom:1rem;">
+      <span></span> Epic 4 — Model Building
+    </div>
+    <h1 class="section-title">Machine Learning Model Building</h1>
+    <p class="section-sub">
+      Four classification algorithms are implemented as modular functions, trained, evaluated
+      and compared. XGBoost is selected as the final deployment model.
+    </p>
+  </div>
+
+  <!-- ───────────────────────────────────────────── -->
+  <!-- SECTION 1: Overview -->
+  <!-- ───────────────────────────────────────────── -->
+  <div class="reveal">
+    <div class="epic-badge">Step 4.1 – 4.4 &nbsp; Algorithm Initialization</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.55rem;font-weight:800;margin-bottom:0.4rem;">Library Imports &amp; Initialization</h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1.5rem;line-height:1.65;">
+      Each classifier is imported from the <code>scikit-learn</code> library and <code>xgboost</code>. All four models are initialized and trained using the same preprocessed data splits for a fair comparison.
+    </p>
+    <div class="code-box">
+<span class="c"># Import algorithms</span>
+<span class="k">from</span> sklearn <span class="k">import</span> tree
+<span class="k">from</span> sklearn <span class="k">import</span> ensemble
+<span class="k">from</span> sklearn <span class="k">import</span> neighbors
+<span class="k">import</span> xgboost
+
+<span class="c"># Initialize classifiers</span>
+dtree = tree.<span class="n">DecisionTreeClassifier</span>()
+Rf    = ensemble.<span class="n">RandomForestClassifier</span>()
+knn   = neighbors.<span class="n">KNeighborsClassifier</span>()
+xgb   = xgboost.<span class="n">XGBClassifier</span>()
+
+<span class="c"># Train all models on the same preprocessed training data</span>
+dtree.<span class="f">fit</span>(x_train, y_train)
+Rf.<span class="f">fit</span>(x_train, y_train)
+knn.<span class="f">fit</span>(x_train, y_train)
+xgb.<span class="f">fit</span>(x_train, y_train)</div>
+  </div>
+
+  <!-- ───────────────────────────────────────────── -->
+  <!-- SECTION 2: The 4 Model Functions -->
+  <!-- ───────────────────────────────────────────── -->
+  <hr class="section-divider" />
+  <div class="reveal">
+    <div class="epic-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border-color:rgba(59,130,246,0.3);">Modular Function Approach</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.55rem;font-weight:800;margin-bottom:0.4rem;">Classification Algorithm Functions</h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1.5rem;line-height:1.65;">
+      A separate function is created for each model. This <strong>modular approach</strong> keeps the codebase organized, reusable, and easy to understand. Each function accepts <code>X_train</code>, <code>X_test</code>, <code>y_train</code>, <code>y_test</code> and returns the trained model and predictions.
+    </p>
+  </div>
+
+  <div class="concept-grid">
+
+    <!-- Decision Tree -->
+    <div class="concept-card reveal">
+      <div>
+        <div class="epic-badge">Story 4.1</div>
+        <h3>Decision Tree — <code>decisiontree()</code></h3>
+        <p>A Decision Tree is a supervised machine learning algorithm used for classification and prediction. It splits the dataset into branches based on feature values. Each branch represents a decision condition, and the final leaf node represents the predicted class.</p>
+        <ul class="step-list">
+          <li><span class="step-num">1</span>Function <code>decisiontree()</code> initialized with <code>X_train, X_test, y_train, y_test</code> parameters.</li>
+          <li><span class="step-num">2</span><code>DecisionTreeClassifier</code> is initialized from scikit-learn.</li>
+          <li><span class="step-num">3</span><code>.fit()</code> trains the model — learns patterns between features and target.</li>
+          <li><span class="step-num">4</span><code>.predict()</code> generates predictions on unseen test data.</li>
+          <li><span class="step-num">5</span>Confusion matrix, classification report, and accuracy score are printed.</li>
+        </ul>
+      </div>
+      <div class="code-box">
+<span class="k">def</span> <span class="f">decisiontree</span>(X_train, X_test, y_train, y_test):
+    <span class="f">print</span>(<span class="s">"\n===== DECISION TREE MODEL BUILDING ====="</span>)
+
+    <span class="c"># 1. Initialize</span>
+    model = tree.<span class="n">DecisionTreeClassifier</span>()
+
+    <span class="c"># 2. Train</span>
+    model.<span class="f">fit</span>(X_train, y_train)
+
+    <span class="c"># 3. Predict</span>
+    y_pred = model.<span class="f">predict</span>(X_test)
+
+    <span class="c"># 4. Evaluate</span>
+    accuracy = <span class="f">accuracy_score</span>(y_test, y_pred)
+    cm = <span class="f">confusion_matrix</span>(y_test, y_pred)
+    cr = <span class="f">classification_report</span>(y_test, y_pred)
+
+    <span class="f">print</span>(<span class="s">f"\n[RESULT] Accuracy: {accuracy:.4f}"</span>)
+    <span class="f">print</span>(<span class="s">"\nConfusion Matrix:\n"</span>); <span class="f">print</span>(cm)
+    <span class="f">print</span>(<span class="s">"\nClassification Report:\n"</span>); <span class="f">print</span>(cr)
+
+    <span class="k">return</span> model, y_pred</div>
+    </div>
+
+    <!-- Random Forest -->
+    <div class="concept-card reveal">
+      <div>
+        <div class="epic-badge" style="background:rgba(34,197,94,0.12);color:#4ade80;border-color:rgba(34,197,94,0.3);">Story 4.2</div>
+        <h3>Random Forest — <code>randomForest()</code></h3>
+        <p>Random Forest is an ensemble method that trains many independent Decision Trees on random subsets of training data and features. Final prediction is made by majority vote. Reduces variance while maintaining low bias — giving a more stable, generalised model.</p>
+        <ul class="step-list">
+          <li><span class="step-num">1</span>Function <code>randomForest()</code> defined with <code>n_estimators=100</code>, <code>random_state=42</code> parameters.</li>
+          <li><span class="step-num">2</span><code>RandomForestClassifier</code> initialized with specified hyperparameters.</li>
+          <li><span class="step-num">3</span><code>.fit()</code> trains the ensemble of decision trees on <code>X_train, y_train</code>.</li>
+          <li><span class="step-num">4</span><code>.predict()</code> generates predictions using majority voting across all trees.</li>
+          <li><span class="step-num">5</span>Accuracy score, confusion matrix, classification report printed. Returns model &amp; predictions.</li>
+        </ul>
+      </div>
+      <div class="code-box">
+<span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> <span class="n">RandomForestClassifier</span>
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> confusion_matrix, classification_report, accuracy_score
+
+<span class="k">def</span> <span class="f">randomForest</span>(X_train, X_test, y_train, y_test,
+               n_estimators=<span class="num">100</span>, random_state=<span class="num">42</span>):
+    <span class="f">print</span>(<span class="s">"\n========== RANDOM FOREST MODEL BUILDING =========="</span>)
+
+    <span class="c"># 1. Initialize Random Forest Classifier</span>
+    model = <span class="n">RandomForestClassifier</span>(
+        n_estimators=n_estimators, random_state=random_state)
+    <span class="f">print</span>(<span class="s">f"[INFO] RandomForestClassifier initialized with n_estimators={n_estimators}"</span>)
+
+    <span class="c"># 2. Train the model</span>
+    model.<span class="f">fit</span>(X_train, y_train)
+    <span class="f">print</span>(<span class="s">"[INFO] Model training completed."</span>)
+
+    <span class="c"># 3. Predict on test data</span>
+    y_pred = model.<span class="f">predict</span>(X_test)
+    <span class="f">print</span>(<span class="s">"[INFO] Prediction completed on test data."</span>)
+
+    <span class="c"># 4. Evaluate the model</span>
+    accuracy = <span class="f">accuracy_score</span>(y_test, y_pred)
+    cm = <span class="f">confusion_matrix</span>(y_test, y_pred)
+    cr = <span class="f">classification_report</span>(y_test, y_pred)
+
+    <span class="c"># 5. Display results</span>
+    <span class="f">print</span>(<span class="s">f"\n[RESULT] Accuracy : {accuracy:.4f}"</span>)
+    <span class="f">print</span>(<span class="s">"\nConfusion Matrix:"</span>); <span class="f">print</span>(cm)
+    <span class="f">print</span>(<span class="s">"\nClassification Report:\n"</span>); <span class="f">print</span>(cr)
+
+    <span class="c"># 6. Return the model and predictions</span>
+    <span class="k">return</span> model, y_pred
+
+<span class="c"># model_rf, y_pred_rf = randomForest(X_train, X_test, y_train, y_test)</span></div>
+    </div>
+
+    <!-- KNN -->
+    <div class="concept-card reveal">
+      <div>
+        <div class="epic-badge" style="background:rgba(245,158,11,0.12);color:#fcd34d;border-color:rgba(245,158,11,0.3);">Story 4.3</div>
+        <h3>K-Nearest Neighbors — <code>KNN()</code></h3>
+        <p>KNN is a lazy learner that stores the training set and classifies new points based on the majority class among the <code>k</code> nearest neighbours using Euclidean distance. <code>n_neighbors=5</code> instructs the algorithm to vote among the 5 closest training samples.</p>
+        <ul class="step-list">
+          <li><span class="step-num">1</span>Function <code>KNN()</code> defined. Accepts <code>X_train, X_test, y_train, y_test</code>.</li>
+          <li><span class="step-num">2</span><code>KNeighborsClassifier(n_neighbors=5)</code> initialized — k=5 means 5 nearest neighbours vote.</li>
+          <li><span class="step-num">3</span><code>.fit()</code> stores training data — maps input features to target labels.</li>
+          <li><span class="step-num">4</span><code>.predict()</code> evaluates unseen test data — generates predicted outcomes.</li>
+          <li><span class="step-num">5</span>Accuracy score, confusion matrix, classification report printed. Returns model &amp; predictions.</li>
+        </ul>
+      </div>
+      <div class="code-box">
+<span class="k">from</span> sklearn.neighbors <span class="k">import</span> <span class="n">KNeighborsClassifier</span>
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> confusion_matrix, classification_report, accuracy_score
+
+<span class="k">def</span> <span class="f">KNN</span>(X_train, X_test, y_train, y_test):
+    <span class="f">print</span>(<span class="s">"\n========== KNN MODEL BUILDING =========="</span>)
+
+    <span class="c"># Initialize KNN classifier</span>
+    model = <span class="n">KNeighborsClassifier</span>(n_neighbors=<span class="num">5</span>)
+
+    <span class="c"># Train the model</span>
+    model.<span class="f">fit</span>(X_train, y_train)
+    <span class="f">print</span>(<span class="s">"[INFO] KNN model training completed."</span>)
+
+    <span class="c"># Predict on test data</span>
+    y_pred = model.<span class="f">predict</span>(X_test)
+    <span class="f">print</span>(<span class="s">"[INFO] Prediction completed on test data."</span>)
+
+    <span class="c"># Evaluate model performance</span>
+    accuracy = <span class="f">accuracy_score</span>(y_test, y_pred)
+    cm       = <span class="f">confusion_matrix</span>(y_test, y_pred)
+    cr       = <span class="f">classification_report</span>(y_test, y_pred)
+
+    <span class="c"># Display results</span>
+    <span class="f">print</span>(<span class="s">"\n[RESULT] Accuracy:"</span>, accuracy)
+    <span class="f">print</span>(<span class="s">"\nConfusion Matrix::"</span>); <span class="f">print</span>(cm)
+    <span class="f">print</span>(<span class="s">"\nClassification Report:"</span>); <span class="f">print</span>(cr)
+
+    <span class="c"># Return model and predictions</span>
+    <span class="k">return</span> model, y_pred
+
+<span class="c"># knn_model, knn_pred = KNN(X_train, X_test, y_train, y_test)</span></div>
+    </div>
+
+    <!-- XGBoost -->
+    <div class="concept-card reveal">
+      <div>
+        <div class="epic-badge" style="background:rgba(239,68,68,0.12);color:#fca5a5;border-color:rgba(239,68,68,0.3);">Story 4.4</div>
+        <h3>XGBoost — Gradient Boosting</h3>
+        <p>The function imports a standard Gradient Boosting classifier and performance metrics from scikit-learn / xgboost. The model is initialized and trained on provided training data using <code>.fit()</code>. Predictions on unseen test data are generated using <code>.predict()</code>. Accuracy score, confusion matrix, and classification report are calculated, printed, and the trained model with predictions is returned.</p>
+        <ul class="step-list">
+          <li><span class="step-num">1</span><code>XGBClassifier</code> imported and initialized with hyperparameters.</li>
+          <li><span class="step-num">2</span><code>.fit()</code> trains the boosting ensemble — each tree corrects previous errors.</li>
+          <li><span class="step-num">3</span><code>.predict()</code> generates outcomes on unseen test data.</li>
+          <li><span class="step-num">4</span>Accuracy, confusion matrix, classification report calculated and printed.</li>
+          <li><span class="step-num">5</span>Trained model and predictions returned for deployment.</li>
+        </ul>
+      </div>
+      <div class="code-box">
+<span class="k">from</span> xgboost <span class="k">import</span> <span class="n">XGBClassifier</span>
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> confusion_matrix, classification_report, accuracy_score
+
+<span class="k">def</span> <span class="f">xgboost_model</span>(X_train, X_test, y_train, y_test):
+    <span class="f">print</span>(<span class="s">"\n========== XGBOOST MODEL BUILDING =========="</span>)
+
+    <span class="c"># Initialize XGBoost Classifier</span>
+    model = <span class="n">XGBClassifier</span>(
+        n_estimators=<span class="num">200</span>,
+        max_depth=<span class="num">5</span>,
+        learning_rate=<span class="num">0.1</span>,
+        eval_metric=<span class="s">'logloss'</span>,
+        random_state=<span class="num">42</span>
+    )
+
+    <span class="c"># Train the model</span>
+    model.<span class="f">fit</span>(X_train, y_train)
+
+    <span class="c"># Predict on test data</span>
+    y_pred = model.<span class="f">predict</span>(X_test)
+
+    <span class="c"># Evaluate</span>
+    accuracy = <span class="f">accuracy_score</span>(y_test, y_pred)
+    cm       = <span class="f">confusion_matrix</span>(y_test, y_pred)
+    cr       = <span class="f">classification_report</span>(y_test, y_pred)
+
+    <span class="f">print</span>(<span class="s">f"\n[RESULT] Accuracy: {accuracy:.4f}"</span>)
+    <span class="f">print</span>(<span class="s">"\nConfusion Matrix:\n"</span>); <span class="f">print</span>(cm)
+    <span class="f">print</span>(<span class="s">"\nClassification Report:\n"</span>); <span class="f">print</span>(cr)
+
+    <span class="k">return</span> model, y_pred</div>
+    </div>
+
+  </div><!-- /concept-grid -->
+
+  <hr class="section-divider" />
+
+  <!-- ───────────────────────────────────────────── -->
+  <!-- SECTION 3: Accuracy Comparison -->
+  <!-- ───────────────────────────────────────────── -->
+  <div class="reveal">
+    <div class="epic-badge">Story 4.5 &nbsp; compareModel()</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.55rem;font-weight:800;margin-bottom:0.4rem;">Model Comparison — <code>compareModel()</code></h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;line-height:1.65;">
+      The <code>compareModel()</code> function compares all trained models in a consolidated view. By displaying accuracy side by side, it identifies the superior algorithm based on test data performance.
+    </p>
+    <div class="code-box" style="margin-bottom:1.5rem;">
+<span class="c"># Predict with all 4 models</span>
+p1 = dtree.<span class="f">predict</span>(X_test)   <span class="c"># Decision Tree</span>
+p2 = Rf.<span class="f">predict</span>(X_test)      <span class="c"># Random Forest</span>
+p3 = knn.<span class="f">predict</span>(X_test)     <span class="c"># KNN</span>
+p4 = xgb.<span class="f">predict</span>(X_test)     <span class="c"># XGBoost</span>
+
+<span class="c"># Compare accuracy scores</span>
+<span class="f">print</span>(metrics.<span class="f">accuracy_score</span>(y_test, p1))   <span class="c"># 0.9655172413793104</span>
+<span class="f">print</span>(metrics.<span class="f">accuracy_score</span>(y_test, p2))   <span class="c"># 0.9655172413793104</span>
+<span class="f">print</span>(metrics.<span class="f">accuracy_score</span>(y_test, p3))   <span class="c"># 0.8965517241379310</span>
+<span class="f">print</span>(metrics.<span class="f">accuracy_score</span>(y_test, p4))   <span class="c"># 0.9655172413793104</span></div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="results-table-wrap reveal">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Accuracy Score</th>
+          <th>Confusion Matrix</th>
+          <th>Classification Report</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Decision Tree</td>
+          <td><span class="acc-value">96.55%</span></td>
+          <td><code style="font-size:0.78rem;">[[25,1],[0,3]]</code></td>
+          <td><span style="color:var(--text-muted);font-size:0.82rem;">Precision / Recall / F1 per class</span></td>
+        </tr>
+        <tr>
+          <td>Random Forest</td>
+          <td><span class="acc-value">96.55%</span></td>
+          <td><code style="font-size:0.78rem;">[[25,1],[0,3]]</code></td>
+          <td><span style="color:var(--text-muted);font-size:0.82rem;">Precision / Recall / F1 per class</span></td>
+        </tr>
+        <tr>
+          <td>KNN</td>
+          <td><span class="acc-value">89.65%</span></td>
+          <td><code style="font-size:0.78rem;">[[26,0],[3,0]]</code></td>
+          <td><span style="color:var(--text-muted);font-size:0.82rem;">Precision / Recall / F1 per class</span></td>
+        </tr>
+        <tr class="best-row">
+          <td>XGBoost <span class="best-tag">Selected</span></td>
+          <td><span class="acc-value best">96.55%</span></td>
+          <td><code style="font-size:0.78rem;color:var(--primary);">[[25,1],[0,3]]</code></td>
+          <td><span style="color:var(--text-muted);font-size:0.82rem;">Precision: 0.75 &nbsp;·&nbsp; Recall: 1.0</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bar Chart -->
+  <div class="bar-section reveal">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:0.25rem;">Accuracy Comparison Chart</h3>
+    <p style="color:var(--text-muted);font-size:0.83rem;">Test set · 25% split · Stratified sampling</p>
+    <div class="bar-chart" id="barChart">
+      <div class="bar-wrap">
+        <div class="bar-pct" id="dt-pct">0%</div>
+        <div class="bar dt"  id="bar-dt"></div>
+        <div class="bar-name"> Decision<br/>Tree</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-pct" id="rf-pct">0%</div>
+        <div class="bar rf"  id="bar-rf"></div>
+        <div class="bar-name"> Random<br/>Forest</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-pct" id="knn-pct">0%</div>
+        <div class="bar knn" id="bar-knn"></div>
+        <div class="bar-name">KNN</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-pct" id="xgb-pct">0%</div>
+        <div class="bar xgb" id="bar-xgb"></div>
+        <div>
+          <div class="bar-name">XGBoost</div>
+          <div style="display:flex;justify-content:center;margin-top:0.3rem;"><span class="bar-best-badge">Best Model</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- ───────────────────────────────────────────── -->
+  <!-- SECTION 4: Confusion Matrix + Metrics -->
+  <!-- ───────────────────────────────────────────── -->
+  <div class="cm-section reveal">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <div class="epic-badge" style="background:rgba(168,85,247,0.12);color:#c084fc;border-color:rgba(168,85,247,0.25);">XGBoost Results</div>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;">Confusion Matrix &amp; Evaluation Metrics</h2>
+        <p style="color:var(--text-muted);font-size:0.83rem;margin-top:0.25rem;">
+          Displays correct vs incorrect predictions. Identifies True Positives, True Negatives,
+          False Positives, and False Negatives. Click each cell to learn more.
+        </p>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Outfit',sans-serif;font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">XGBoost Accuracy</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;color:var(--primary);">0.9655</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">metrics.accuracy_score(y_test, p4)</div>
+      </div>
+    </div>
+
+    <!-- Predicted label axis -->
+    <div style="text-align:center;font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.25rem;">← Predicted Label →</div>
+    <div style="display:flex;justify-content:center;gap:0.5rem;padding-left:70px;max-width:380px;margin:0 auto 0.25rem;">
+      <div style="flex:1;text-align:center;font-size:0.68rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">No Flood (0)</div>
+      <div style="flex:1;text-align:center;font-size:0.68rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Flood (1)</div>
+    </div>
+
+    <div class="cm-outer">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div class="cm-axis vertical">Actual Label</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;width:58px;text-align:right;padding-right:0.5rem;">No Flood (0)</div>
+            <div class="cm-cell tn" id="cm-tn" onclick="showCm('tn')">
+              <div class="cm-type">True Negative</div>
+              <div class="cm-val">25</div>
+              <div class="cm-abbr">TN</div>
+            </div>
+            <div class="cm-cell fp" id="cm-fp" onclick="showCm('fp')">
+              <div class="cm-type">False Positive</div>
+              <div class="cm-val">1</div>
+              <div class="cm-abbr">FP</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;width:58px;text-align:right;padding-right:0.5rem;">Flood (1)</div>
+            <div class="cm-cell fn" id="cm-fn" onclick="showCm('fn')">
+              <div class="cm-type">False Negative</div>
+              <div class="cm-val">0</div>
+              <div class="cm-abbr">FN</div>
+            </div>
+            <div class="cm-cell tp" id="cm-tp" onclick="showCm('tp')">
+              <div class="cm-type">True Positive</div>
+              <div class="cm-val">3</div>
+              <div class="cm-abbr">TP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- array output -->
+    <div style="text-align:center;margin:0.75rem 0 0;">
+      <code style="background:rgba(10,15,30,0.6);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:0.5rem 1.2rem;font-size:0.83rem;color:#38bdf8;">
+        array([[25, 1], [0, 3]], dtype=int64)
+      </code>
+    </div>
+
+    <div class="cm-tooltip" id="cm-tooltip">
+       <strong>Click any cell</strong> to understand what TP, TN, FP, FN mean in the context of flood prediction.
+    </div>
+
+    <!-- Precision / Recall / Accuracy metrics from notebook -->
+    <h3 style="font-size:1rem;font-weight:700;margin-top:2rem;margin-bottom:0.75rem;"> XGBoost Evaluation Output</h3>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Accuracy Score</div>
+        <div class="metric-val">0.9655</div>
+        <div class="metric-desc">metrics.accuracy_score(y_test, p4)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Precision Score</div>
+        <div class="metric-val">0.75</div>
+        <div class="metric-desc">metrics.precision_score(y_test, p4)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Recall Score</div>
+        <div class="metric-val">1.0</div>
+        <div class="metric-desc">metrics.recall_score(y_test, p4)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">False Negatives</div>
+        <div class="metric-val" style="color:var(--success);">0</div>
+        <div class="metric-desc">Zero missed flood events</div>
+      </div>
+    </div>
+
+    <!-- Precision / Recall / F1 explanation -->
+    <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-top:1rem;">
+      <h4 style="font-size:0.9rem;font-weight:700;margin-bottom:0.75rem;color:var(--primary);">Classification Report — What Each Metric Means</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;font-size:0.84rem;color:var(--text-muted);line-height:1.6;">
+        <div><strong style="color:var(--text-primary);">Precision</strong><br/>Shows how many <em>predicted positive</em> results are actually correct.<br/><code>TP / (TP + FP)</code></div>
+        <div><strong style="color:var(--text-primary);">Recall</strong><br/>Shows how many <em>actual positive</em> results are correctly identified.<br/><code>TP / (TP + FN)</code></div>
+        <div><strong style="color:var(--text-primary);">F1-Score</strong><br/>Balanced measure of precision and recall.<br/><code>2 × P × R / (P + R)</code></div>
+        <div><strong style="color:var(--text-primary);">Support</strong><br/>Indicates the number of <em>actual samples</em> available for each class.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- ───────────────────────────────────────────── -->
+  <!-- SECTION 5: Why XGBoost + Deployment -->
+  <!-- ───────────────────────────────────────────── -->
+  <div class="reveal">
+    <div class="epic-badge">Story 4.6 &nbsp; Best Model Selection</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.55rem;font-weight:800;margin-bottom:0.4rem;">Why XGBoost Was Selected</h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1.25rem;line-height:1.65;">
+      Decision Tree, Random Forest, and XGBoost all achieved <strong>96.55% accuracy</strong>. Despite the tied score, XGBoost was selected as the final deployment model.
+    </p>
+    <div class="why-grid">
+      <div class="why-card">
+        <h4> Generalization</h4>
+        <p>Provides strong generalization and performs exceptionally well on structured tabular data — the type of data used in this flood prediction project.</p>
+      </div>
+      <div class="why-card">
+        <h4> Algorithm Mechanics</h4>
+        <p>As a boosting algorithm, it combines multiple weak learners step by step, reducing errors by learning from previous mistakes in each round.</p>
+      </div>
+      <div class="why-card">
+        <h4> Stability</h4>
+        <p>More stable and less prone to overfitting compared to a single Decision Tree, while handling complex patterns better than traditional models.</p>
+      </div>
+      <div class="why-card">
+        <h4> Deployment Readiness</h4>
+        <p>The trained XGBoost model is saved using Joblib. It is loaded by the Flask application and executed to generate real-time predictions from user inputs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saving the Model -->
+  <div class="save-section reveal">
+    <div class="epic-badge" style="background:rgba(34,197,94,0.12);color:#4ade80;border-color:rgba(34,197,94,0.3);"> Saving the Final Model</div>
+    <h3>Saving the Best Model with Joblib</h3>
+    <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:1.25rem;line-height:1.65;">
+      After evaluation, XGBoost is saved using the <strong>Joblib</strong> library. The trained model is stored as <code>floods.save</code> and the fitted StandardScaler as <code>transform.save</code>. Saving both files ensures the same data transformation and prediction logic used during training is applied at deployment. During prediction, the application first loads the scaler to standardize user input, then uses the saved XGBoost model to generate flood predictions.
+    </p>
+    <div class="code-box">
+<span class="k">import</span> joblib
+
+<span class="c"># Save the trained XGBoost model</span>
+joblib.<span class="f">dump</span>(xgb,    <span class="s">'floods.save'</span>)
+
+<span class="c"># Save the fitted StandardScaler (critical for consistent input transformation)</span>
+joblib.<span class="f">dump</span>(scaler, <span class="s">'transform.save'</span>)
+
+<span class="c"># ─── During Flask deployment: load both files ───</span>
+model  = joblib.<span class="f">load</span>(<span class="s">'floods.save'</span>)
+scaler = joblib.<span class="f">load</span>(<span class="s">'transform.save'</span>)
+
+<span class="c"># Standardize user input using saved scaler, then predict</span>
+user_input_scaled = scaler.<span class="f">transform</span>(user_input)
+prediction        = model.<span class="f">predict</span>(user_input_scaled)</div>
+  </div>
+
+  <!-- Reference Links -->
+  <div style="margin-top:2rem;" class="reveal">
+    <div class="epic-badge"> Reference Links</div>
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">Further Reading</h3>
+    <div class="ref-row">
+      <a class="ref-link" href="https://www.analyticsvidhya.com/blog/2020/04/confusion-matrix-machine-learning/" target="_blank" rel="noopener">
+         Confusion Matrix Guide
+      </a>
+      <a class="ref-link" href="https://medium.com/@kohlishivam5522/understanding-a-classification-report-for-your-machine-learning-model-88815e2ce397" target="_blank" rel="noopener">
+        Classification Report Guide
+      </a>
+    </div>
+    <p style="color:var(--text-muted);font-size:0.8rem;margin-top:0.75rem;line-height:1.6;">
+      The comparison step ensures data-driven model selection. XGBoost is chosen for final deployment due to its high accuracy, robust generalization, and reliable performance on the flood prediction dataset.
+    </p>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;margin-top:4rem;padding-bottom:2rem;" class="reveal">
+    <p style="color:var(--text-muted);max-width:480px;margin:0 auto 2rem;font-size:0.9rem;">
+      Model trained, evaluated, saved. Now try the live XGBoost flood predictor.
+    </p>
+    <a class="btn-primary" href="/predict" style="font-size:1rem;padding:0.9rem 2.2rem;">
+      Try the Live Predictor →
+    </a>
+    &nbsp;&nbsp;
+    <a class="btn-outline" href="/analysis" style="font-size:1rem;padding:0.9rem 2.2rem;">
+       View EDA Charts
+    </a>
+  </div>
+
+</div><!-- /mb-section -->
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+</footer>
+
+<script>
+  // ── Particles ──
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${Math.random()*100}%;width:${Math.random()*3+2}px;height:${Math.random()*3+2}px;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;`;
+    container.appendChild(p);
+  }
+
+  // ── Scroll Reveal ──
+  const revealObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // ── Bar Chart ──
+  const accuracies = { dt: 96.55, rf: 96.55, knn: 89.65, xgb: 96.55 };
+  const maxH = 160;
+  function animateBars() {
+    ['dt','rf','knn','xgb'].forEach((key, i) => {
+      setTimeout(() => {
+        const pct = accuracies[key];
+        document.getElementById('bar-' + key).style.height = Math.round((pct / 100) * maxH) + 'px';
+        document.getElementById(key + '-pct').textContent = pct.toFixed(2) + '%';
+      }, i * 220);
+    });
+  }
+  const barObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { animateBars(); barObs.disconnect(); } });
+  }, { threshold: 0.3 });
+  barObs.observe(document.getElementById('barChart'));
+
+  // ── Confusion Matrix ──
+  const cmInfo = {
+    tn: { title: 'True Negative (TN) = 25 — <span style="color:#4ade80">Correct: No Flood</span>',
+          body:  'The model predicted <strong>No Flood</strong> and no flood actually occurred. XGBoost correctly identified <strong>25 safe periods</strong> in the test set. Builds trust in the system during non-flood conditions.' },
+    fp: { title: 'False Positive (FP) = 1 — <span style="color:#fcd34d">False Alarm</span>',
+          body:  'The model predicted <strong>Flood</strong> but no flood actually happened. XGBoost made only <strong>1 false alarm</strong>. While disruptive (unnecessary alert), it is far less dangerous than a missed flood.' },
+    fn: { title: 'False Negative (FN) = 0 — <span style="color:#4ade80"> Zero Missed Floods</span>',
+          body:  'The model predicted <strong>No Flood</strong> when a flood actually occurred — the most dangerous error type. XGBoost achieved <strong>0 False Negatives</strong>, meaning it never missed a real flood event on the test set.' },
+    tp: { title: 'True Positive (TP) = 3 — <span style="color:#86efac">Correct: Flood Detected</span>',
+          body:  'The model correctly predicted <strong>Flood</strong> when a flood was actually occurring. XGBoost identified all <strong>3 flood events</strong> in the test set correctly — a perfect recall of 1.0.' }
+  };
+  function showCm(type) {
+    ['tn','fp','fn','tp'].forEach(t => document.getElementById('cm-'+t).classList.remove('active-cell'));
+    document.getElementById('cm-'+type).classList.add('active-cell');
+    const i = cmInfo[type];
+    document.getElementById('cm-tooltip').innerHTML = `<strong>${i.title}</strong><br/><br/>${i.body}`;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>No Flood Risk — Rising Waters</title>
+  <meta name="description" content="Low flood probability detected. Conditions are currently safe." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* Sunshine glow animation */
+    .sunshine {
+      position:fixed;top:-150px;left:50%;transform:translateX(-50%);
+      width:400px;height:400px;border-radius:50%;
+      background:radial-gradient(circle,rgba(34,197,94,0.12) 0%,transparent 70%);
+      pointer-events:none;z-index:-1;
+      animation:sunPulse 4s ease-in-out infinite;
+    }
+    @keyframes sunPulse{0%,100%{transform:translateX(-50%) scale(1);opacity:0.7;}50%{transform:translateX(-50%) scale(1.15);opacity:1;}}
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+<div class="sunshine"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  <a class="btn-predict-nav" href="/predict">New Prediction</a>
+</nav>
+
+<main class="result-container">
+
+  <!-- Safe Badge -->
+  <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:0.6rem 1.2rem;margin-bottom:1.5rem;font-size:0.85rem;color:#86efac;font-weight:600;display:inline-block;animation:fadeDown 0.4s ease;">
+     All Clear: Conditions Safe
+  </div>
+
+  <!-- Result Icon -->
+  <div class="result-icon safe-icon">️</div>
+
+  <!-- Title -->
+  <h1 class="result-title safe">No Flood Risk!</h1>
+  <p class="result-subtitle">
+    The AI model predicts a <strong>low flood probability</strong> based on the provided meteorological parameters. Current weather conditions appear to be within safe limits.
+  </p>
+
+  <!-- Probability Badge -->
+  <div class="prob-badge">
+    <span class="prob-label">Flood Probability</span>
+    <span class="prob-value safe" id="prob-display">{{ probability }}%</span>
+    <div class="progress-bar-wrap" style="margin-top:0.75rem;">
+      <div class="progress-bar-fill safe" id="prog-bar" style="width:0%;"></div>
+    </div>
+    <span style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Model: XGBoost Classifier</span>
+  </div>
+
+  <!-- Safe Message -->
+  <div class="alert-card safe">
+    <strong> Recommendations:</strong>
+    <ul style="padding-left:1.2rem;margin-top:0.5rem;line-height:2;">
+      <li>Continue <strong>routine monitoring</strong> of rainfall and river levels.</li>
+      <li>Maintain <strong>preparedness plans</strong> for potential weather changes.</li>
+      <li>Inspect and clear <strong>drainage systems</strong> to prevent local flooding.</li>
+      <li>Stay updated with <strong>meteorological department</strong> advisories.</li>
+      <li>Re-run predictions if <strong>conditions change significantly</strong>.</li>
+    </ul>
+  </div>
+
+  <!-- Input Summary -->
+  <div class="input-summary">
+    <h4>Input Parameters Used</h4>
+    <div class="summary-grid">
+      {% for key, val in form_data.items() %}
+      <div class="summary-item">
+        <div class="s-label">{{ key }}</div>
+        <div class="s-value">{{ val }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="result-actions">
+    <a class="btn-primary" href="/predict">New Prediction</a>
+    <a class="btn-back" href="/">Home</a>
+  </div>
+
+</main>
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+</footer>
+
+<script>
+  // Particles (green)
+  const pc=document.getElementById('particles');
+  for(let i=0;i<15;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;width:${Math.random()*3+2}px;height:${Math.random()*3+2}px;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;background:#22c55e;`;pc.appendChild(p);}
+
+  // Animate progress bar
+  const prob = {{ probability }};
+  setTimeout(() => {
+    document.getElementById('prog-bar').style.width = prob + '%';
+  }, 300);
+</script>
+</body>
+</html>

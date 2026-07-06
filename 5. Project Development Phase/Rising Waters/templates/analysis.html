@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Analysis & EDA — Rising Waters</title>
+  <meta name="description" content="Exploratory Data Analysis charts including distribution plots, box plots, heatmap, and model performance for the Rising Waters flood prediction system." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .chart-section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2rem; margin-top: 2rem; }
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+    }
+    .chart-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--glow-blue); }
+    .chart-card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-weight: 600; }
+    .chart-card img { width: 100%; border-radius: 10px; display: block; }
+    .chart-card.full { grid-column: 1 / -1; }
+    .no-charts {
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 14px; padding: 2rem; text-align: center; color: #fcd34d;
+    }
+    .no-charts code { background: rgba(255,255,255,0.08); padding: 0.2rem 0.6rem; border-radius: 6px; font-family: monospace; }
+    .epic-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.25);
+      border-radius: 6px; padding: 0.25rem 0.75rem;
+      font-size: 0.7rem; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem;
+    }
+    @media (max-width: 600px) { .chart-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link active" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/history">History</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  {% if session.get('username') %}
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500;">User: <strong style="color:var(--text-primary);">{{ session.get('username') }}</strong></span>
+    <a class="btn-predict-nav" href="/logout" style="background: rgba(0,0,0,0.05); color:var(--text-primary); border:1px solid var(--border); box-shadow:none; font-size:0.8rem; padding:0.4rem 1rem;">Logout</a>
+  </div>
+  {% else %}
+  <a class="btn-predict-nav" href="/predict">Predict Flood Risk</a>
+  {% endif %}
+</nav>
+
+<!-- Page Header -->
+<div class="chart-section">
+  <div class="section-header">
+    <div class="hero-badge" style="margin-bottom:1rem;">
+      <span></span> Exploratory Data Analysis
+    </div>
+    <h1 class="section-title">Data Analysis & Model Performance</h1>
+    <p class="section-sub">
+      Complete EDA pipeline — univariate distributions, box plots, correlation heatmap,
+      multivariate pair plots, and model accuracy comparison.
+    </p>
+  </div>
+
+  {% if not trained %}
+  <div class="no-charts">
+    <div style="font-size:2rem;margin-bottom:1rem;"></div>
+    <strong>Model not trained yet.</strong><br/><br/>
+    Run the training pipeline first:<br/>
+    <code>python train_model.py</code><br/><br/>
+    This will generate all analysis charts and train the XGBoost model.
+  </div>
+  {% elif not charts %}
+  <div class="no-charts">
+    <div style="font-size:2rem;margin-bottom:1rem;"></div>
+    <strong>Charts not found.</strong> Re-run the pipeline to regenerate them:<br/>
+    <code>python train_model.py</code>
+  </div>
+  {% else %}
+
+  <!-- Epic 2: Univariate Analysis -->
+  {% if 'univariate_dist' in charts or 'boxplots' in charts or 'class_dist' in charts %}
+  <div style="margin: 2.5rem 0 1rem;">
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:0.4rem;">Single-Feature Distributions</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;">Each feature examined independently to understand distribution, skewness, and outliers.</p>
+  </div>
+  <div class="chart-grid">
+    {% if 'univariate_dist' in charts %}
+    <div class="chart-card full">
+      <h3> {{ charts['univariate_dist'] }}</h3>
+      <img src="{{ url_for('static', filename='images/univariate_dist.png') }}"
+           alt="Feature Distribution Plots" loading="lazy" />
+    </div>
+    {% endif %}
+    {% if 'boxplots' in charts %}
+    <div class="chart-card full">
+      <h3> {{ charts['boxplots'] }}</h3>
+      <img src="{{ url_for('static', filename='images/boxplots.png') }}"
+           alt="Box Plots" loading="lazy" />
+    </div>
+    {% endif %}
+    {% if 'class_dist' in charts %}
+    <div class="chart-card">
+      <h3> {{ charts['class_dist'] }}</h3>
+      <img src="{{ url_for('static', filename='images/class_dist.png') }}"
+           alt="Class Distribution" loading="lazy" />
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Epic 2: Multivariate Analysis -->
+  {% if 'heatmap' in charts or 'pairplot' in charts %}
+  <div style="margin: 3rem 0 1rem;">
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:0.4rem;">Feature Relationships</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;">Correlations and interactions between multiple features simultaneously.</p>
+  </div>
+  <div class="chart-grid">
+    {% if 'heatmap' in charts %}
+    <div class="chart-card full">
+      <h3> {{ charts['heatmap'] }}</h3>
+      <img src="{{ url_for('static', filename='images/heatmap.png') }}"
+           alt="Correlation Heatmap" loading="lazy" />
+    </div>
+    {% endif %}
+    {% if 'pairplot' in charts %}
+    <div class="chart-card full">
+      <h3> {{ charts['pairplot'] }}</h3>
+      <img src="{{ url_for('static', filename='images/pairplot.png') }}"
+           alt="Pair Plot" loading="lazy" />
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Epic 4: Model Performance -->
+  {% if 'model_comparison' in charts or 'confusion_matrix' in charts %}
+  <div style="margin: 3rem 0 1rem;">
+    <h2 style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:0.4rem;">Classification Results</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;">Accuracy comparison across all trained models and XGBoost confusion matrix.</p>
+  </div>
+  <div class="chart-grid">
+    {% if 'model_comparison' in charts %}
+    <div class="chart-card">
+      <h3> {{ charts['model_comparison'] }}</h3>
+      <img src="{{ url_for('static', filename='images/model_comparison.png') }}"
+           alt="Model Comparison" loading="lazy" />
+    </div>
+    {% endif %}
+    {% if 'confusion_matrix' in charts %}
+    <div class="chart-card">
+      <h3> {{ charts['confusion_matrix'] }}</h3>
+      <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}"
+           alt="Confusion Matrix" loading="lazy" />
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+  <!-- CTA -->
+  <div style="text-align:center; margin-top:4rem; padding-bottom:2rem;">
+    <a class="btn-primary" href="/predict" style="font-size:1rem; padding:0.9rem 2.2rem;">
+      Try the Predictor →
+    </a>
+    &nbsp;&nbsp;
+    <a class="btn-outline" href="/" style="font-size:1rem; padding:0.9rem 2.2rem;">
+       Back to Home
+    </a>
+  </div>
+</div>
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+</footer>
+
+<script>
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${Math.random()*100}%;width:${Math.random()*3+2}px;height:${Math.random()*3+2}px;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;`;
+    container.appendChild(p);
+  }
+</script>
+</body>
+</html>

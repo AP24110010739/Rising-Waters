@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rising Waters — Flood Prediction System</title>
+  <meta name="description" content="A flood prediction system built as part of a data science internship using Python, XGBoost and Flask. Trained on real meteorological data to classify flood risk." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- Animated Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; color:white; background:linear-gradient(135deg, var(--primary), var(--accent)); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--glow-blue);">RW</div>
+    <span class="brand-text">Rising Waters</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link active" href="/">Home</a>
+    <a class="nav-link" href="/analysis">Analysis</a>
+    <a class="nav-link" href="/history">History</a>
+    <a class="nav-link" href="/predict">Predict</a>
+  </div>
+  {% if session.get('username') %}
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500;">User: <strong style="color:var(--text-primary);">{{ session.get('username') }}</strong></span>
+    <a class="btn-predict-nav" href="/logout" style="background: rgba(0,0,0,0.05); color:var(--text-primary); border:1px solid var(--border); box-shadow:none; font-size:0.8rem; padding:0.4rem 1rem;">Logout</a>
+  </div>
+  {% else %}
+  <a class="btn-predict-nav" href="/predict">Predict Flood Risk</a>
+  {% endif %}
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">
+    <span></span> Internship Project — Data Science &amp; Machine Learning
+  </div>
+  <h1>
+    <span class="gradient-text">Rising Waters</span><br />
+    Flood Prediction System
+  </h1>
+  <p>
+    A flood prediction system built using Python, Scikit-learn, XGBoost, and Flask
+    as part of a data science internship. Trained on real meteorological data to
+    classify flood risk with up to <strong style="color:var(--primary);">96.55% accuracy</strong>.
+    Developed to support early warning and disaster preparedness initiatives.
+  </p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="/predict">
+      Analyse Flood Risk
+    </a>
+    <a class="btn-outline" href="#about">
+       Learn More
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-value">96.55%</div>
+      <div class="stat-label">XGBoost Accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-value">4</div>
+      <div class="stat-label">ML Models Trained</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-value">8</div>
+      <div class="stat-label">Meteorological Features</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-value">115</div>
+      <div class="stat-label">Dataset Records</div>
+    </div>
+  </div>
+</section>
+
+<!-- About the Project -->
+<section class="section reveal" id="about-project" style="background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 4rem 2rem;">
+  <div style="max-width: 950px; margin: 0 auto; text-align: left;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(13,148,136,0.12); border: 1px solid rgba(13,148,136,0.25); border-radius: 6px; padding: 0.25rem 0.75rem; font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom:1rem;">About the Project</div>
+    <h2 class="section-title" style="margin-bottom: 1.5rem; text-align: left;">Disaster Preparedness & Climate Action</h2>
+    
+    <div style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; display: flex; flex-direction: column; gap: 1.5rem;">
+      <p>
+        <strong>Rising Waters</strong> focuses on addressing the growing risk of floods, which have become increasingly frequent and severe due to factors such as climate change, unpredictable weather patterns, rapid urbanization, deforestation, and inadequate drainage and water management systems. Floods can have devastating consequences, including loss of human life, displacement of communities, destruction of homes and infrastructure, agricultural damage, economic losses, and long-term environmental impacts. As populations continue to grow and weather conditions become more extreme, the need for accurate flood prediction and effective disaster preparedness has become more critical than ever.
+      </p>
+      <p>
+        This project leverages the power of data analysis and machine learning to develop a flood prediction system capable of identifying potential flood risks before they occur. By analyzing historical weather data, rainfall patterns, water levels, and other relevant environmental factors, the system can detect trends and generate predictions that support early warning mechanisms. These insights enable government agencies, disaster management authorities, and local communities to take proactive measures, such as issuing alerts, planning evacuations, and implementing preventive strategies.
+      </p>
+    </div>
+
+    <!-- Details Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;">
+        <h4 style="font-family:'Outfit', sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem; color:var(--text-primary);">Technology Stack</h4>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+          Built using Python, Flask for web routing, and Scikit-learn for modeling. Secure user credentials and prediction transaction audits are persisted via an SQLite database.
+        </p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;">
+        <h4 style="font-family:'Outfit', sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem; color:var(--text-primary);">Dataset & Models</h4>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+          Trained on meteorological records analyzing Temperature, Humidity, Cloud Cover, and seasonal/annual precipitation. The core predictive engine is powered by an optimized XGBoost Classifier.
+        </p>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;">
+        <h4 style="font-family:'Outfit', sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:0.75rem; color:var(--text-primary);">Audit & Accountability</h4>
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+          Ensures transparency by logging every prediction request. The history page logs who initiated the analysis, their input parameters, the timestamp, and the model's calculated probability.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- About / Features -->
+<section class="section reveal" id="about">
+  <div class="section-header">
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">From raw weather data to actionable flood predictions — powered by cutting-edge machine learning.</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Data Collection</h3>
+      <p>Ingests meteorological parameters including annual rainfall, cloud visibility, seasonal rainfall, temperature, and humidity from open datasets.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Visual Analysis</h3>
+      <p>Comprehensive EDA using distribution plots, box plots, heat maps, pair plots, and descriptive statistics to understand feature patterns.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Pre-processing</h3>
+      <p>Missing value imputation, IQR-based outlier treatment, feature scaling with StandardScaler, and stratified train-test splitting.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Model Training</h3>
+      <p>Trains and compares Decision Tree, Random Forest, KNN, and XGBoost classifiers. XGBoost selected as best performer.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Flask Deployment</h3>
+      <p>Saved XGBoost model served via a Flask API with intuitive HTML interface for real-time flood risk predictions.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Live Deployment</h3>
+      <p>The completed system runs as a local web server using Flask, accessible from any device on the network. Predictions are generated in real time using saved model files.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Model Performance -->
+<section class="section reveal" id="models" style="padding-top:0;">
+  <div class="section-header">
+    <h2 class="section-title">Model Performance</h2>
+    <p class="section-sub">Four classification algorithms were trained and evaluated. XGBoost achieved the highest accuracy.</p>
+  </div>
+  <div class="model-grid">
+    <div class="model-card">
+      <div class="model-name">Decision Tree</div>
+      <div class="model-acc">96.55%</div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">Random Forest</div>
+      <div class="model-acc">96.55%</div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">K-Nearest Neighbors</div>
+      <div class="model-acc">89.65%</div>
+    </div>
+    <div class="model-card best">
+      <div class="model-name">XGBoost</div>
+      <div class="model-acc">96.55%</div>
+      <span class="model-badge">Selected Model</span>
+    </div>
+  </div>
+</section>
+
+<!-- Scenarios -->
+<section class="section reveal" id="scenarios" style="background: rgba(14,165,233,0.03); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06);">
+  <div class="section-header">
+    <h2 class="section-title">Use Case Scenarios</h2>
+    <p class="section-sub">Real-world applications of the Rising Waters flood prediction system.</p>
+  </div>
+  <div class="feature-grid" style="max-width:900px;">
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Early Warning</h3>
+      <p>Meteorologists enter current readings. High flood probability triggers evacuation advisories several hours in advance.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon">️</div>
+      <h3>Resource Allocation</h3>
+      <p>Relief coordinators monitor multiple regions during monsoon season to prioritise resource deployment.</p>
+    </div>
+    <div class="feature-card">
+      <div class="fc-icon"></div>
+      <h3>Model Validation</h3>
+      <p>Government analysts test the model against historical flood data to confirm operational reliability.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section reveal" style="text-align:center; padding: 4rem 2rem;">
+  <h2 class="section-title">Ready to Predict Flood Risk?</h2>
+  <p style="color:var(--text-muted); max-width:500px; margin:0 auto 2rem;">
+    Enter meteorological parameters to get an instant AI-powered flood risk assessment.
+  </p>
+  <a class="btn-primary" href="/predict" style="font-size:1.1rem; padding: 1rem 2.5rem;">
+    Start Prediction →
+  </a>
+</section>
+
+<footer>
+  <p>Rising Waters: A Machine Learning Approach to Flood Prediction &nbsp;|&nbsp; Built with Python, Flask &amp; XGBoost</p>
+  <p style="margin-top:0.4rem; font-size:0.75rem;">Powered by XGBoost · Scikit-learn · Flask · IBM Cloud Ready</p>
+</footer>
+
+<script>
+  // Particle generator
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      width: ${Math.random() * 4 + 2}px;
+      height: ${Math.random() * 4 + 2}px;
+      animation-duration: ${Math.random() * 10 + 8}s;
+      animation-delay: ${Math.random() * 8}s;
+      opacity: ${Math.random() * 0.5 + 0.1};
+    `;
+    container.appendChild(p);
+  }
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
