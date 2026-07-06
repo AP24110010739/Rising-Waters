@@ -141,7 +141,11 @@ The prediction is generated instantly using the trained Machine Learning model.
 - Cloud deployment with continuous model updates
   
 Developed By
+
 KHUSHWANTH MEDARAMETLA
+
 B.Tech - Computer Science and Engineering
+
 SRM University AP
+
 Internship Project
