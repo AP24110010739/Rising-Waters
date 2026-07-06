@@ -51,6 +51,7 @@ The prediction model uses the following environmental parameters:
 The model is trained using historical weather and rainfall datasets to classify whether flood conditions are likely to occur based on user-provided inputs.
 
 **Project Structure**
+
 Rising-Waters/
 │
 ├── 1. Brainstorming & Ideation/
