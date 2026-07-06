@@ -114,8 +114,11 @@ http://127.0.0.1:5000
 
 
 **Output**
+
 After entering the required weather and rainfall parameters, the system predicts one of the following outcomes:
+
 ✅ No Flood Chance
+
 ⚠️ Flood Chance Detected
 
 The prediction is generated instantly using the trained Machine Learning model.
