@@ -140,6 +140,7 @@ The prediction is generated instantly using the trained Machine Learning model.
 - IoT sensor integration for real-time monitoring
 - Cloud deployment with continuous model updates
   
+
 Developed By
 
 KHUSHWANTH MEDARAMETLA
