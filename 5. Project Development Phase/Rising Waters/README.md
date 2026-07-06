@@ -1,6 +1,7 @@
 **Rising Waters - Flood Prediction System**
 
 Project Overview:
+
 Rising Waters is a Machine Learning based web application that predicts the likelihood of floods using historical rainfall and weather data. The system leverages a trained Machine Learning model integrated with a Flask web application to provide users with instant flood risk predictions through a simple and interactive interface.
 The project aims to support early disaster preparedness by helping individuals and authorities identify potential flood conditions before they become critical.
 
@@ -75,6 +76,7 @@ Rising-Waters/
 
 
 **How to Run**
+
 Clone the Repository
 git clone https://github.com/AP24110010739/Rising-Waters.git
 
