@@ -96,19 +96,19 @@ Rising-Waters/
 
 **How to Run**
 
-Clone the Repository
+- Clone the Repository
 
 git clone https://github.com/AP24110010739/Rising-Waters.git
 
-Install Dependencies
+- Install Dependencies
 
 pip install -r requirements.txt
 
-Run the Application
+- Run the Application
 
 python app.py
 
-Open in Browser
+- Open in Browser
 
 http://127.0.0.1:5000
 
