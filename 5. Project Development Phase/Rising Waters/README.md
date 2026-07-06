@@ -54,40 +54,62 @@ The model is trained using historical weather and rainfall datasets to classify 
 
 Rising-Waters/
 │
+
 ├── 1. Brainstorming & Ideation/
+
 ├── 2. Requirement Analysis/
+
 ├── 3. Project Design Phase/
+
 ├── 4. Project Planning Phase/
+
 ├── 5. Project Development Phase/
+
 │   ├── Dataset/
+
 │   ├── Model/
+
 │   ├── Notebook/
+
 │   ├── static/
+
 │   │   ├── css/
+
 │   │   ├── images/
+
 │   │   └── js/
+
 │   ├── templates/
+
 │   ├── app.py
+
 │   ├── requirements.txt
+
 │   └── trained_model.save
 │
 ├── 6. Project Testing/
+
 ├── 7. Project Documentation/
+
 └── 8. Project Demonstration/
 
 
 **How to Run**
 
 Clone the Repository
+
 git clone https://github.com/AP24110010739/Rising-Waters.git
 
 Install Dependencies
+
 pip install -r requirements.txt
 
 Run the Application
+
 python app.py
 
 Open in Browser
+
 http://127.0.0.1:5000
 
 
